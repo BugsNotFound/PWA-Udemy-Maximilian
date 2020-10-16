@@ -48,22 +48,22 @@ function clearCards(){
   }
 }
 
-function createCard() {
+function createCard(data) {
   var cardWrapper = document.createElement('div');
   cardWrapper.className = 'shared-moment-card mdl-card mdl-shadow--2dp';
   var cardTitle = document.createElement('div');
   cardTitle.className = 'mdl-card__title';
-  cardTitle.style.backgroundImage = 'url("/src/images/sf-boat.jpg")';
+  cardTitle.style.backgroundImage = `url(${data.image})`;
   cardTitle.style.backgroundSize = 'cover';
   cardTitle.style.height = '180px';
   cardWrapper.appendChild(cardTitle);
   var cardTitleTextElement = document.createElement('h2');
   cardTitleTextElement.className = 'mdl-card__title-text';
-  cardTitleTextElement.textContent = 'San Francisco Trip';
+  cardTitleTextElement.textContent = data.title;
   cardTitle.appendChild(cardTitleTextElement);
   var cardSupportingText = document.createElement('div');
   cardSupportingText.className = 'mdl-card__supporting-text';
-  cardSupportingText.textContent = 'In San Francisco';
+  cardSupportingText.textContent = data.location;
   cardSupportingText.style.textAlign = 'center';
   // var cardSaveButton = document.createElement('button');
   // cardSaveButton.textContent = 'Save';
@@ -74,7 +74,14 @@ function createCard() {
   sharedMomentsArea.appendChild(cardWrapper);
 }
 
-var url = 'https://httpbin.org/get';
+function updateUI(data){
+  clearCards();
+  for(var i=0; i<data.length; i++){
+    createCard(data[i]);
+  }
+}
+
+var url = 'https://pwagram-f30cc.firebaseio.com/posts.json';
 var networkDataReceived = false;
 
 fetch(url)
@@ -83,23 +90,21 @@ fetch(url)
   })
   .then(function(data) {
     console.log("From web", data);
+    var dataArray = [];
+    for(var key in data){
+      dataArray.push(data[key]);
+    }
     clearCards();
-    createCard();
+    updateUI(dataArray);
   });
 
-if('caches' in window){
-  caches.match(url)
-    .then(function(response){
-      if(response){
-        return response.json();
+if('indexedDB' in window){
+  readAllData('posts')
+    .then(function(data){
+      if(!networkDataReceived){
+        console.log('From indexedDb:', data);
+        updateUI(data);
       }
     })
-    .then(function(data){
-      console.log("From Cache", data);
-      if(!networkDataReceived && data){
-        clearCards();
-        createCard();
-      }
-    });
 }
 

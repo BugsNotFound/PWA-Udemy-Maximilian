@@ -1,5 +1,8 @@
-var CACHE_STATIC_NAME = 'static';
-var CACHE_DYNAMIC_NAME = 'dynamic';
+importScripts('/src/js/idb.js');
+importScripts('/src/js/utility.js');
+
+var CACHE_STATIC_NAME = 'static-v0';
+var CACHE_DYNAMIC_NAME = 'dynamic-v0';
 
 var STATIC_FILES = [
     '/',
@@ -7,6 +10,7 @@ var STATIC_FILES = [
     '/offline.html',
     '/src/js/app.js',
     '/src/js/feed.js',
+    '/src/js/idb.js',
     '/src/js/polyfills/promise.js',
     '/src/js/polyfills/fetch.js',
     '/src/js/material.min.js',
@@ -62,7 +66,6 @@ self.addEventListener('activate', function(event){
 function isInArray(string, array) {
     var cachePath;
     if (string.indexOf(self.origin) === 0) { // request targets domain where we serve the page from (i.e. NOT a CDN)
-      console.log('matched ', string);
       cachePath = string.substring(self.origin.length); // take the part of the URL AFTER the domain (e.g. after localhost:8080)
     } else {
       cachePath = string; // store the full request (for CDNs)
@@ -72,19 +75,23 @@ function isInArray(string, array) {
 
 //Cache then network and dynamic caching
 self.addEventListener('fetch', function(event){
-    var url = 'https://httpbin.org/get';
-
+    var url = 'https://pwagram-f30cc.firebaseio.com/posts.json';
     if(event.request.url.indexOf(url) > -1){
         event.respondWith(
-            caches.open(CACHE_DYNAMIC_NAME)
-                .then(function(cache){
-                    return fetch(event.request)
-                        .then(function(res){
-                            trimCache(CACHE_DYNAMIC_NAME, 500);
-                            cache.put(event.request, res.clone());
-                            return res;
-                        })
-                })
+           fetch(event.request)
+            .then(function(res){
+                var clonedRes = res.clone();
+                clearAllData('posts')
+                  .then(function(){     
+                    return clonedRes.json()
+                  })
+                  .then(function(data){
+                    for(var key in data){
+                        writeData('posts', data[key]);
+                    }
+                });
+                return res;
+            })
         );
     }
     else if(isInArray(event.request.url, STATIC_FILES)){

@@ -5,6 +5,10 @@ var sharedMomentsArea = document.querySelector('#shared-moments');
 
 function openCreatePostModal() {
   createPostArea.style.display = 'block';
+  setTimeout(() => {
+    createPostArea.style.transform = 'translateY(0)';
+  }, 1);
+
   if (deferredPrompt) {
     deferredPrompt.prompt();
 
@@ -23,7 +27,10 @@ function openCreatePostModal() {
 }
 
 function closeCreatePostModal() {
-  createPostArea.style.display = 'none';
+  createPostArea.style.transform = 'translateY(100vh)';
+  setTimeout(() => {
+    createPostArea.style.display = 'none';
+  }, 300);
 }
 
 // Currently not in use, allows to save assets in cache on demand otherwise.
@@ -55,7 +62,6 @@ function createCard(data) {
   cardTitle.className = 'mdl-card__title';
   cardTitle.style.backgroundImage = `url(${data.image})`;
   cardTitle.style.backgroundSize = 'cover';
-  cardTitle.style.height = '180px';
   cardWrapper.appendChild(cardTitle);
   var cardTitleTextElement = document.createElement('h2');
   cardTitleTextElement.className = 'mdl-card__title-text';
@@ -89,7 +95,6 @@ fetch(url)
     return res.json();
   })
   .then(function(data) {
-    console.log("From web", data);
     var dataArray = [];
     for(var key in data){
       dataArray.push(data[key]);
@@ -102,7 +107,6 @@ if('indexedDB' in window){
   readAllData('posts')
     .then(function(data){
       if(!networkDataReceived){
-        console.log('From indexedDb:', data);
         updateUI(data);
       }
     })
